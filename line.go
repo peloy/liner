@@ -833,6 +833,15 @@ mainLoop:
 			// Catch unhandled control codes (anything <= 31)
 			case 0, 28, 29, 30, 31:
 				s.doBeep()
+			case '?':
+				if s.contextHelper != nil {
+					fmt.Println("?")
+					s.contextHelper(line, pos)
+					s.restartPrompt()
+					s.needRefresh = true
+					break
+				}
+				fallthrough // Handle '?' as normal character
 			default:
 				if pos == len(line) && !s.multiLineMode &&
 					len(p)+len(line) < s.columns*4 && // Avoid countGlyphs on large lines

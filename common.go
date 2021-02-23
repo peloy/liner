@@ -23,6 +23,7 @@ type commonState struct {
 	history           []string
 	historyMutex      sync.RWMutex
 	completer         WordCompleter
+	contextHelper     ContextHelper
 	columns           int
 	killRing          *ring.Ring
 	ctrlCAborts       bool
@@ -188,6 +189,12 @@ type Completer func(line string) []string
 // to the completer which may returns ("Hello, ", {"world", "Word"}, "!!!") to have "Hello, world!!!".
 type WordCompleter func(line string, pos int) (head string, completions []string, tail string)
 
+// ContextHelper is a callback provided by the user and that is called when
+// the '?' key is pressed. ContextHelper receives the currently edited line
+// and the current cursor position. This callback should generate context help
+// that is appropriate for what the user has typed so far.
+type ContextHelper func(line []rune, pos int)
+
 // SetCompleter sets the completion function that Liner will call to
 // fetch completion candidates when the user presses tab.
 func (s *State) SetCompleter(f Completer) {
@@ -204,6 +211,10 @@ func (s *State) SetCompleter(f Completer) {
 // fetch completion candidates when the user presses tab.
 func (s *State) SetWordCompleter(f WordCompleter) {
 	s.completer = f
+}
+
+func (s *State) SetContextHelper(f ContextHelper) {
+	s.contextHelper = f
 }
 
 // SetTabCompletionStyle sets the behvavior when the Tab key is pressed
