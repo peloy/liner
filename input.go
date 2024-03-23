@@ -96,9 +96,14 @@ func (s *State) restartPrompt() {
 			var n nexter
 			n.r, _, n.err = s.r.ReadRune()
 			next <- n
-			// Shut down nexter loop when an end condition has been reached
-			if n.err != nil || n.r == '\n' || n.r == '\r' || n.r == ctrlC ||
-				n.r == ctrlD || (s.contextHelper != nil &&  n.r == '?') {
+			// Shut down nexter loop when an end condition has been
+			// reached, or the context help key '?' was pressed
+			// when a context helper is in use, unless the user
+			// pressed Control-V to escape the next control
+			// character.
+			if n.err != nil || !s.escapeNext &&
+				(n.r == '\n' || n.r == '\r' || n.r == ctrlC || n.r == ctrlD ||
+				(s.contextHelper != nil &&  n.r == '?')) {
 				close(next)
 				return
 			}

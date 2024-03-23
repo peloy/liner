@@ -661,6 +661,23 @@ mainLoop:
 		historyAction = false
 		switch v := next.(type) {
 		case rune:
+			if s.escapeNext {
+				if pos == len(line) && !s.multiLineMode &&
+					len(p)+len(line) < s.columns*4 && // Avoid countGlyphs on large lines
+					countGlyphs(p)+countGlyphs(line) < s.columns-1 {
+					line = append(line, v)
+					fmt.Printf("%c", v)
+					pos++
+				} else {
+					line = append(line[:pos], append([]rune{v}, line[pos:]...)...)
+					pos++
+					s.needRefresh = true
+				}
+
+				s.escapeNext = false
+				break
+			}
+
 			switch v {
 			case cr, lf:
 				if s.needRefresh {
@@ -825,11 +842,13 @@ mainLoop:
 			case tab: // Tab completion
 				line, pos, next, err = s.tabComplete(p, line, pos)
 				goto haveNext
+			case ctrlV: // Escape next key
+				s.escapeNext = true
 			// Catch keys that do nothing, but you don't want them to beep
 			case esc:
 				// DO NOTHING
 			// Unused keys
-			case ctrlG, ctrlO, ctrlQ, ctrlS, ctrlV, ctrlX, ctrlZ:
+			case ctrlG, ctrlO, ctrlQ, ctrlS, ctrlX, ctrlZ:
 				fallthrough
 			// Catch unhandled control codes (anything <= 31)
 			case 0, 28, 29, 30, 31:
@@ -842,7 +861,7 @@ mainLoop:
 					s.needRefresh = true
 					break
 				}
-				fallthrough // Handle '?' as normal character
+				fallthrough // Handle '?' as normal character.
 			default:
 				if pos == len(line) && !s.multiLineMode &&
 					len(p)+len(line) < s.columns*4 && // Avoid countGlyphs on large lines

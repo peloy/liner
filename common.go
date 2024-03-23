@@ -35,6 +35,7 @@ type commonState struct {
 	shouldRestart     ShouldRestart
 	noBeep            bool
 	needRefresh       bool
+	escapeNext        bool // Set by control-V to escape next key.
 }
 
 // TabStyle is used to select how tab completions are displayed.
